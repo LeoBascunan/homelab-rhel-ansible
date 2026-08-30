@@ -1,0 +1,8 @@
+---
+# Defaults for the baseline role; override in group_vars.
+baseline_sshd_permit_root_login: "no"
+baseline_sshd_password_authentication: "no"
+baseline_firewalld_services:
+  - ssh
+baseline_motd: |
+  Managed by Ansible — changes made by hand will be overwritten.

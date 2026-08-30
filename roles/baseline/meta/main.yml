@@ -1,0 +1,11 @@
+---
+galaxy_info:
+  author: Leonardo Bascuñán
+  description: Baseline state for every RHEL 10 node in the lab
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: EL
+      versions:
+        - "10"
+dependencies: []

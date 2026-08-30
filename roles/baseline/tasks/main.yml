@@ -1,0 +1,35 @@
+---
+# Order matters: packages first (chrony/firewalld must exist before they are configured),
+# users and SSH before hardening (never lock yourself out), firewalld last.
+
+- name: Install base packages
+  ansible.builtin.dnf:
+    name: "{{ base_packages }}"
+    state: present
+
+- name: Set the timezone
+  community.general.timezone:
+    name: "{{ timezone }}"
+
+- name: Configure chrony
+  ansible.builtin.template:
+    src: chrony.conf.j2
+    dest: /etc/chrony.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart chrony
+
+- name: Enable and start chrony
+  ansible.builtin.service:
+    name: chronyd
+    state: started
+    enabled: true
+
+# TODO (31 Aug – 1 Sep): write these tasks yourself — that is the point of the lab.
+# - Create the administrator account with a Vault-stored password hash and the SSH public key (ansible.builtin.user, ansible.posix.authorized_key)
+# - Grant sudo through /etc/sudoers.d/ (ansible.builtin.copy with validate: 'visudo -cf %s')
+# - Harden sshd with a template and a handler that validates the config (sshd -t) before restarting
+# - firewalld: enable the service, allow only baseline_firewalld_services (ansible.posix.firewalld)
+# - MOTD from baseline_motd
+# - Install scripts/healthcheck.sh and scripts/backup.sh under /usr/local/sbin and schedule them with systemd timers

@@ -1,0 +1,17 @@
+# Variables shared by every host. Secrets go in vault.yml (encrypted), never here.
+timezone: America/Santiago
+ntp_servers:
+  - 0.cl.pool.ntp.org
+  - 1.cl.pool.ntp.org
+base_packages:
+  - vim-enhanced
+  - bash-completion
+  - tmux
+  - git
+  - chrony
+  - firewalld
+  - policycoreutils-python-utils
+  - sysstat
+  - tar
+admin_user: admin
+admin_ssh_public_key: "{{ lookup('file', '~/.ssh/id_ed25519.pub') }}"

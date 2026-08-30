@@ -1,0 +1,14 @@
+# secrets and local inventory
+inventory/hosts.yml
+inventory/group_vars/all/vault.yml
+.vault_pass*
+# artefacts
+*.retry
+*.iso
+*.log
+__pycache__/
+.cache/
+# editors
+.vscode/
+.idea/
+*.swp

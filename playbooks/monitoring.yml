@@ -1,0 +1,18 @@
+---
+# Day 4 (2 September): node_exporter everywhere, Prometheus and Grafana on the monitoring group.
+# Suggested collections: prometheus.prometheus (node_exporter, prometheus), grafana.grafana (grafana).
+- name: Install node_exporter on every node
+  hosts: all
+  become: true
+  tasks:
+    - name: TODO — replace with the prometheus.prometheus.node_exporter role
+      ansible.builtin.debug:
+        msg: "not implemented yet"
+
+- name: Install Prometheus and Grafana on the monitoring server
+  hosts: monitoring
+  become: true
+  tasks:
+    - name: TODO — Prometheus with a scrape config generated from the inventory (template)
+      ansible.builtin.debug:
+        msg: "not implemented yet"

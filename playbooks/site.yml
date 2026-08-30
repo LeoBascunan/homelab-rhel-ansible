@@ -1,0 +1,6 @@
+---
+- name: Apply the baseline to every node
+  hosts: all
+  become: true
+  roles:
+    - role: baseline

@@ -1,0 +1,11 @@
+---
+- name: Connectivity and facts check
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Ping every node
+      ansible.builtin.ping:
+
+    - name: Show distribution and kernel
+      ansible.builtin.debug:
+        msg: "{{ ansible_facts.distribution }} {{ ansible_facts.distribution_version }} · kernel {{ ansible_facts.kernel }}"

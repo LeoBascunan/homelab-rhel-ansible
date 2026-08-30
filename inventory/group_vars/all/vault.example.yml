@@ -1,0 +1,4 @@
+# Encrypt the real file with:  ansible-vault create inventory/group_vars/all/vault.yml
+# Reference these variables from main.yml; never commit the unencrypted file.
+vault_admin_password_hash: "<generate with: openssl passwd -6>"
+vault_grafana_admin_password: "<choose one>"
