@@ -42,3 +42,22 @@ One entry per working session. Keep it honest: what was planned, what actually h
 **Next.** Clone node1 → node2 (hostname, machine-id, re-register), static IPs with nmcli, SSH keys to both nodes, /etc/hosts.
 
 ---
+
+## 2026-09-01 — Day 2: two nodes under Ansible
+
+**Done.**
+- Cloned node1 → node2 (full clone) and gave it its own identity: hostname,
+  regenerated /etc/machine-id, subscription-manager clean + register, insights re-registered.
+- Regenerated node2's SSH host keys (clones inherit them from the source).
+- Static IPs with nmcli: node1 = 192.168.52.11/24, node2 = .12, gateway/DNS .2. Verified
+  gateway, Internet and node-to-node ping.
+- SSH keys from the WSL2 control node to both nodes; verified with BatchMode.
+- Installed ansible + ansible-lint, created the real inventory (ansible_user: leo),
+  installed collections, and ran playbooks/ping.yml: ok=3, failed=0 on both nodes.
+
+**Problems and fixes.**
+- Ran systemd-machine-id-setup without sudo the first time (sudo only applied to rm).
+- ssh-copy-id to node1 failed three password attempts; retried and succeeded.
+- insights-client refused to register before subscription-manager: order matters.
+
+**Next.** Write the baseline role tasks (users, sudo, sshd hardening, firewalld, motd) and run site.yml.

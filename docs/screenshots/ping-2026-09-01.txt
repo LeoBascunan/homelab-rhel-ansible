@@ -1,0 +1,23 @@
+
+PLAY [Connectivity and facts check] ********************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [node1]
+ok: [node2]
+
+TASK [Ping every node] *********************************************************
+ok: [node2]
+ok: [node1]
+
+TASK [Show distribution and kernel] ********************************************
+ok: [node1] => {
+    "msg": "RedHat 10.2 · kernel 6.12.0-211.49.1.el10_2.x86_64"
+}
+ok: [node2] => {
+    "msg": "RedHat 10.2 · kernel 6.12.0-211.49.1.el10_2.x86_64"
+}
+
+PLAY RECAP *********************************************************************
+node1                      : ok=3    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+node2                      : ok=3    changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
