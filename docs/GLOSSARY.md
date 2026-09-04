@@ -51,7 +51,7 @@ Terms I have actually used in this lab, defined in my own words. One line each; 
 
 ## Practice
 
-- **Baseline** — the minimum agreed state every server must be in; my baseline role makes it executable.
+- **Baseline** — the minimum agreed state every server must be in; the baseline role is that state written as executable code, so applying it builds the state and re-applying it verifies it.
 - **Drift** — when a machine's real state diverges from the declared one; a re-run detects and fixes it.
 - **Full clone (VM)** — independent copy of a VM; needs new hostname, machine-id, host keys, registration.
 - **Runbook** — a written, tested procedure for one failure scenario.

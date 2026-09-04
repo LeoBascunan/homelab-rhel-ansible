@@ -1,0 +1,55 @@
+
+PLAY [Apply the baseline to every node] ****************************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [node1]
+ok: [node2]
+
+TASK [baseline : Install base packages] ****************************************
+ok: [node1]
+ok: [node2]
+
+TASK [baseline : Set the timezone] *********************************************
+ok: [node1]
+ok: [node2]
+
+TASK [baseline : Configure chrony] *********************************************
+ok: [node1]
+ok: [node2]
+
+TASK [baseline : Enable and start chrony] **************************************
+ok: [node1]
+ok: [node2]
+
+TASK [baseline : Ensure the administrator account exists and is in wheel] ******
+ok: [node1]
+ok: [node2]
+
+TASK [baseline : Authorize the control node's SSH key] *************************
+ok: [node1]
+ok: [node2]
+
+TASK [baseline : Allow the wheel group to use sudo] ****************************
+ok: [node1]
+ok: [node2]
+
+TASK [baseline : Harden the SSH daemon] ****************************************
+ok: [node1]
+ok: [node2]
+
+TASK [baseline : Enable and start firewalld] ***********************************
+ok: [node1]
+ok: [node2]
+
+TASK [baseline : Allow only the baseline services in firewalld] ****************
+ok: [node1] => (item=ssh)
+ok: [node2] => (item=ssh)
+
+TASK [baseline : Set the message of the day] ***********************************
+ok: [node1]
+ok: [node2]
+
+PLAY RECAP *********************************************************************
+node1                      : ok=12   changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+node2                      : ok=12   changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+
