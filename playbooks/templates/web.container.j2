@@ -1,0 +1,18 @@
+# Managed by Ansible — changes made by hand will be overwritten.
+#
+# Quadlet unit. systemd reads this file and generates {{ container_name }}.service
+# at every daemon-reload; the .service file itself is never written by hand.
+
+[Unit]
+Description=Containerised web service ({{ container_image }})
+
+[Container]
+Image={{ container_image }}
+ContainerName={{ container_name }}
+PublishPort={{ container_host_port }}:{{ container_target_port }}
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target

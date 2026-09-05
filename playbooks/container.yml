@@ -1,0 +1,87 @@
+---
+# A containerised web service, running rootless under Podman and managed by systemd.
+#
+# The workload lives on node2 on purpose. node1 is the monitoring host, and a
+# monitoring host that runs out of memory takes the visibility down with it —
+# exactly when it is needed most.
+
+- name: Containerised web service (rootless Podman + systemd Quadlet)
+  hosts: node2
+  become: true
+
+  vars:
+    container_user: leo
+    container_name: web
+    container_image: docker.io/library/nginx:alpine
+    container_host_port: 8080
+    container_target_port: 80
+
+  tasks:
+    - name: Install Podman
+      ansible.builtin.dnf:
+        name: podman
+        state: present
+
+    - name: Look up the container user
+      ansible.builtin.getent:
+        database: passwd
+        key: "{{ container_user }}"
+
+    - name: Remember the user's uid and home directory
+      ansible.builtin.set_fact:
+        container_uid: "{{ ansible_facts.getent_passwd[container_user][1] }}"
+        container_home: "{{ ansible_facts.getent_passwd[container_user][4] }}"
+
+    # Without lingering, the user's systemd instance stops when the last session
+    # closes and the container dies with it. This is what makes it survive a reboot.
+    - name: Keep the user manager alive without an open session
+      ansible.builtin.command: "loginctl enable-linger {{ container_user }}"
+      args:
+        creates: "/var/lib/systemd/linger/{{ container_user }}"
+
+    - name: Create the Quadlet directory
+      ansible.builtin.file:
+        path: "{{ container_home }}/.config/containers/systemd"
+        state: directory
+        owner: "{{ container_user }}"
+        group: "{{ container_user }}"
+        mode: "0755"
+
+    - name: Define the container as a systemd unit
+      ansible.builtin.template:
+        src: web.container.j2
+        dest: "{{ container_home }}/.config/containers/systemd/{{ container_name }}.container"
+        owner: "{{ container_user }}"
+        group: "{{ container_user }}"
+        mode: "0644"
+      notify: Restart the container service
+
+    - name: Open the service port
+      ansible.posix.firewalld:
+        port: "{{ container_host_port }}/tcp"
+        permanent: true
+        immediate: true
+        state: enabled
+
+    - name: Make sure the container service is running
+      become_user: "{{ container_user }}"
+      environment:
+        XDG_RUNTIME_DIR: "/run/user/{{ container_uid }}"
+        DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ container_uid }}/bus"
+      ansible.builtin.systemd_service:
+        scope: user
+        name: "{{ container_name }}.service"
+        state: started
+        daemon_reload: true
+
+  handlers:
+    - name: Restart the container service
+      become_user: "{{ container_user }}"
+      environment:
+        XDG_RUNTIME_DIR: "/run/user/{{ container_uid }}"
+        DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ container_uid }}/bus"
+      ansible.builtin.systemd_service:
+        scope: user
+        name: "{{ container_name }}.service"
+        state: restarted
+        daemon_reload: true

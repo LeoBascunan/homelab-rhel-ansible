@@ -10,6 +10,8 @@ Short rules, each one paid for with a debugging session. The story behind every 
 - **An error can come from a previous run that died half-way, not from the change I just made.** Before editing anything, ask what state the last failure left behind. *(Day 4)*
 - **A misspelled variable name fails silently in Ansible.** Setting `grafana_rhsm_suscription` (the Spanish spelling) instead of `grafana_rhsm_subscription` created a new, unused variable: the role kept its own default and the error message did not change one character. A typo in a value explodes immediately; a typo in a variable name says nothing at all. *(Day 4)*
 - **The error message names the file it read the value from — go and read that file.** Two role bugs were solved by opening the role's own `defaults/main.yml` instead of guessing. *(Day 4)*
+- **A Quadlet container unit is not enabled with `systemctl enable`.** The generated `.service` lives under `/run` and is rebuilt on every reload, so there is nothing to link to; the `[Install] WantedBy=` line inside the `.container` file is the enable mechanism. *(Day 5)*
+- **A rootless service dies with your session unless the user manager lingers.** `loginctl enable-linger <user>` is what makes a rootless container survive logout and reboot. *(Day 5)*
 - **`--check` predicts, it does not converge.** A check-mode run reports what *would* change; only a real run makes it true, and only a *second* real run proves idempotency. *(Day 3)*
 - **A grep only proves the absence of the exact pattern you searched for.** `grep "RHEL 9"` came back clean while "Red Hat Enterprise Linux 9" was still sitting in the file. *(Day 0+1)*
 - **Order matters between `subscription-manager` and `insights-client`.** A host has to be registered before it can report. *(Day 0+1)*
@@ -135,3 +137,40 @@ from the play itself.
 **Next.** Verify both targets UP in Prometheus, log into Grafana, add the Prometheus datasource
 and import dashboard 1860; then provoke failures (service down, disk full, high load) and write
 the first runbooks against them.
+
+---
+
+## 2026-09-05 — Day 5: a containerised service under systemd
+
+**Plan.** Package a web service as a rootless Podman container on node2, hand it to systemd, and
+then codify the whole thing in a playbook so it is reproducible.
+
+**Done.**
+- Installed Podman on node2 and ran nginx as a **rootless** container — no `sudo`, no daemon. The
+  workload goes on node2 on purpose: node1 is the monitoring host, and a monitoring host that runs
+  out of memory takes the visibility down with it, exactly when it is needed most.
+- Converted the hand-made container into a **Quadlet** unit at
+  `~/.config/containers/systemd/web.container`. systemd generates `web.service` from that file on
+  every `daemon-reload`; the `.service` is never written by hand.
+- `loginctl enable-linger leo`, so the user's systemd instance — and the container with it —
+  survives logout and starts at boot.
+- Opened 8080/tcp in firewalld and confirmed the page from a browser on the Windows host.
+- Rebooted node2. The container came back on its own, which is the only test that counts.
+- Codified all of it in `playbooks/container.yml`, with the unit rendered from a Jinja2 template
+  and lingering made idempotent through a `creates:` guard.
+
+**Problems and fixes.**
+- Ran the first container without `-d`, so it stayed in the foreground and streamed its logs over
+  the terminal. Not a failure — that is exactly how you watch a container that refuses to start —
+  but `Ctrl+C` then stops it, and the container has to be removed before the name can be reused.
+- `systemctl --user enable web` failed with "transient or generated". Quadlet units cannot be
+  enabled that way; see the key lesson above.
+- `curl -s hhtp://...` printed nothing at all. The typo was invisible because `-s` silences error
+  messages along with the progress bar. Second time this week — `-sS` is the habit now.
+
+**Worth remembering.** The container's own startup log reports the host kernel,
+`6.12.0-211.49.1.el10_2.x86_64`, while the userspace it runs is Alpine. That single line is the
+whole difference between a container and a virtual machine: shared kernel, separate userspace.
+It is why this starts in a second where a VM takes a minute.
+
+**Next.** README with screenshots and architecture diagram, then tag `v1.0`.

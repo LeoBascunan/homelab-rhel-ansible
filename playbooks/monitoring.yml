@@ -1,18 +1,44 @@
 ---
-# Day 4 (2 September): node_exporter everywhere, Prometheus and Grafana on the monitoring group.
-# Suggested collections: prometheus.prometheus (node_exporter, prometheus), grafana.grafana (grafana).
-- name: Install node_exporter on every node
+- name: Node exporter on every node
   hosts: all
   become: true
-  tasks:
-    - name: TODO — replace with the prometheus.prometheus.node_exporter role
-      ansible.builtin.debug:
-        msg: "not implemented yet"
+  roles:
+    - prometheus.prometheus.node_exporter
+  post_tasks:
+    - name: Open the node exporter port
+      ansible.posix.firewalld:
+        port: 9100/tcp
+        permanent: true
+        immediate: true
+        state: enabled
 
-- name: Install Prometheus and Grafana on the monitoring server
+- name: Prometheus and Grafana on the monitoring server
   hosts: monitoring
   become: true
-  tasks:
-    - name: TODO — Prometheus with a scrape config generated from the inventory (template)
-      ansible.builtin.debug:
-        msg: "not implemented yet"
+  vars:
+    prometheus_web_listen_address: "0.0.0.0:9095"
+    prometheus_scrape_configs:
+      - job_name: node
+        static_configs:
+          - targets:
+              - 192.168.52.11:9100
+              - 192.168.52.12:9100
+    grafana_rhsm_subscription: false
+    grafana_rhsm_repo: false
+    grafana_ini:
+      security:
+        admin_user: admin
+        admin_password: "{{ vault_grafana_admin_password }}"
+  roles:
+    - prometheus.prometheus.prometheus
+    - grafana.grafana.grafana
+  post_tasks:
+    - name: Open Prometheus and Grafana ports
+      ansible.posix.firewalld:
+        port: "{{ item }}"
+        permanent: true
+        immediate: true
+        state: enabled
+      loop:
+        - 9095/tcp
+        - 3000/tcp
