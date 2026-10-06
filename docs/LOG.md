@@ -174,3 +174,50 @@ whole difference between a container and a virtual machine: shared kernel, separ
 It is why this starts in a second where a VM takes a minute.
 
 **Next.** README with screenshots and architecture diagram, then tag `v1.0`.
+
+---
+
+## 2026-10-06 — Day 6: waking the lab after a month
+
+**Plan.** The lab had been powered off for a month. Bring it back the way you would after a
+holiday: check reachability, registration and pending updates, patch, reboot, and prove that
+everything comes back on its own.
+
+**Done.**
+- Both nodes reachable from the control node (`ansible all -m ping`).
+- node1 still registered; node2 was not (see below) and was registered again.
+- Patched both nodes to kernel **6.12.0-211.62.1** — node1 by hand to see every step, node2
+  entirely from the control node with ad-hoc Ansible: the `dnf` module with `nobest=true`, then
+  the `reboot` module, which reboots, waits and confirms the host is back before it returns.
+- After the reboots: the rootless container on node2 answered on :8080 **from outside, before
+  anyone logged in** — lingering confirmed again. Prometheus, Grafana and node_exporter active on
+  node1. The dashboard shows the maintenance itself: data starting at power-on, a ~140 Mb/s
+  network spike during the 902 MB download, CPU during the install, and Uptime reset.
+
+**Problems and fixes.**
+- `dnf check-update` as `leo` returned **403** from cdn.redhat.com. The first output line said why:
+  *"Not root, Subscription Management repositories not updated"*. The entitlement certificate in
+  `/etc/pki/entitlement/` is readable only by root, so the request went out without it.
+- With `sudo`, still 403 on node2. `subscription-manager status` said *Registered* — but that is
+  node2's own view. `subscription-manager refresh` gave the real answer: **410 Gone**, the system
+  had been deleted on Red Hat's side, most likely for inactivity. Fixed with
+  `subscription-manager clean` (not `unregister`: the server side no longer existed) and
+  `subscription-manager register`. node1, off for the same month, had not been deleted.
+- `dnf update` failed: *"nothing provides kernel-uname-r = 6.12.0-211.63.1 needed by
+  kernel-modules-6.12.0-211.63.1"*. `dnf --showduplicates list kernel-core` showed the newest
+  kernel available was 211.62.1: Red Hat had published the 211.63.1 modules without the kernel.
+  Nothing had been installed — dnf resolves the whole transaction before touching the system.
+  `--nobest` then installed the newest *complete* kernel, 211.62.1, and skipped the three
+  orphaned modules, exactly as predicted.
+- Two vault errors worth telling apart: *"no vault secrets found"* means no password was given;
+  *"Decryption failed"* means the wrong one was. `-J` is the short form of `--ask-vault-pass`.
+
+**Worth remembering.**
+- Local state is not remote state. *Registered* is what the machine believes; 403 and 410 are what
+  the server believes.
+- Two machines that lived the same month are not necessarily in the same state. Check each one.
+- A flag like `--nobest` is wrong used blindly and right after a diagnosis.
+- Test a rootless service from outside **before** logging in: the login itself can start it.
+- An ad-hoc `command` always reports CHANGED; the real success signal is `rc=0`.
+
+**Next.** node3 from scratch, using the objective-first method.
